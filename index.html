@@ -1,39 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <title>Happy Birthday!</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Countdown & AI Wishes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            overflow-x: hidden;
+        }
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007AFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 0.7em top 50%, 0 0;
+            background-size: 0.65em auto, 100%;
+        }
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message-box.show { display: block; opacity: 1; }
+        .message-box.error { background-color: #f44336; }
+        .animation-gif {
+            max-width: 180px;
+            height: auto;
+            margin: 1rem auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Cake Animation Styles --- */
+        .cake-container {
+            position: relative;
+            width: 200px;
+            height: 250px; /* Increased slightly for wish button */
+            margin: 10px auto; /* Reduced margin for wish button */
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+        .cake-layer {
+            height: 40px; border-radius: 8px 8px 0 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: absolute; bottom: -150px; opacity: 0;
+            animation: fall 0.8s ease-in-out forwards, fadeIn 0.5s ease-out forwards;
+        }
+        .cake-layer-1 { width: 180px; background-color: #ffcbdb; animation-delay: 0.2s, 0.2s; z-index: 1; }
+        .cake-layer-2 { width: 160px; background-color: #e8a2cf; animation-delay: 0.8s, 0.8s; z-index: 2; }
+        .cake-layer-3 { width: 140px; background-color: #d179be; animation-delay: 1.4s, 1.4s; z-index: 3; }
+        .cake-layer-4 { width: 120px; background-color: #b950ac; animation-delay: 2.0s, 2.0s; z-index: 4; }
+        .candle {
+            width: 15px; height: 50px; background-color: #f0e68c; border-radius: 3px 3px 0 0;
+            position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
+            opacity: 0; animation: placeCandle 0.4s ease-out forwards; animation-delay: 2.9s; z-index: 5;
+        }
+        .flame {
+            width: 12px; height: 20px; background-color: #ffac33;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            opacity: 0; animation: flicker 1s infinite alternate, fadeInFlame 0.5s forwards;
+            animation-delay: 3.4s, 3.4s; box-shadow: 0 0 10px 2px #ffac33, 0 0 20px 5px #ffdd00;
+        }
+        @keyframes fall {
+            0% { bottom: 300px; opacity: 0; transform: translateY(-120px) scale(0.7); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .cake-layer-1.fallen { bottom: 0px; } .cake-layer-2.fallen { bottom: 40px; }
+        .cake-layer-3.fallen { bottom: 80px; } .cake-layer-4.fallen { bottom: 120px; }
+        .candle.placed { bottom: 160px; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeInFlame { to { opacity: 1; } }
+        @keyframes placeCandle {
+            0% { bottom: 200px; opacity: 0; transform: translateX(-50%) scale(0.8); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+        @keyframes flicker {
+            0% { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: 1; }
+            50% { transform: translateX(-50%) scaleY(0.95) scaleX(1.05); opacity: 0.8; }
+            100% { transform: translateX(-50%) scaleY(1.05) scaleX(0.95); opacity: 1; }
+        }
+        /* --- End Cake Animation Styles --- */
+
+        /* Loading spinner for Gemini API call */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #6366f1; /* Indigo */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Styling for AI generated wish */
+        #gemini-wish-box {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #eef2ff; /* Light indigo background */
+            border-left: 4px solid #6366f1; /* Indigo border */
+            border-radius: 4px;
+            font-style: italic;
+            color: #4338ca; /* Darker indigo text */
+        }
+    </style>
 </head>
-<body>
-  <h1>Birthday Wishes</h1>
-  <p>Select your name to see a message:</p>
-  <select id="friend-select">
-    <option value="">-- Select your name please --</option>
-    <option value="Amrit: ">Amrit </option>
-    <option value="Bontu: ">Bontu </option>
-    <option value="Caroline: 11-20">Caroline </option>
-    <option value="Cecille: ">Cecille </option>
-    <option value="Dian: 01-15">Dian </option>
-    <option value="Edz: ">Edz </option>
-    <option value="Emily: 03-09">Emily </option>
-    <option value="Fatima: 05-25">Fatima </option>
-    <option value="Gagan: ">Gagan </option>
-    <option value="Gyan: 01-07">Gyan </option>
-    <option value="Harsh: 02-07">Harsh </option>
-    <option value="Karam: 02-18">Karam </option>
-    <option value="Mandeep: ">Mandeep </option>
-    <option value="Manoj: 04-25">Manoj </option>
-  </select>
-  <div id="message"></div>
-  <footer class = "footer">
-    <p>Thank you for checking out the website</p>
-    <p><a href="mailto:random@fake.com" class="fa fa-envelope">Email</a></p>
-    <p><a href="https://www.instagram.com/" class="fa fa-instagram">Instagram</a></p>
-    <p><a href="https://www.youtube.com/" class="fa fa-youtube-play">Youtube</a></p>
-</footer>
-  <script src="script.js"></script>
+<body class="bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 shadow-md rounded-b-lg">
+        <h1 class="text-2xl font-bold text-center">🎉 When is your birthday Birthday🎂</h1>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 flex flex-col items-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+            <label for="name-select" class="block text-lg font-semibold mb-3 text-gray-700">Select a Name:</label>
+            <select id="name-select" class="block w-full px-4 py-3 mb-6 text-base text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out">
+                <option value="">-- Select a Name --</option>
+            </select>
+
+            <div id="result-area" class="mt-6 p-6 bg-gray-50 rounded-lg min-h-[420px] flex flex-col justify-center items-center border border-gray-200 overflow-hidden">
+                <p class="text-gray-500">Select a name to see their birthday status!</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gradient-to-r from-purple-600 to-blue-500 text-white p-3 text-center text-sm mt-8 rounded-t-lg">
+        <p>&copy; <span id="current-year"></span> Birthday Wishes</p>
+    </footer>
+
+    <div id="message-box" class="message-box"></div>
+
+    <script>
+        // --- EDIT THIS SECTION TO ADD/CHANGE PEOPLE ---
+        const peopleData = [
+            { name: "Manoj", birthday: "1999-04-25" },
+            { name: "Edz", birthday: "1999-12-10" },
+            { name: "Fatima", birthday: "2003-05-25" },
+            { name: "Another", birthday: "1997-01-15" },
+            { name: "Another", birthday: "2000-02-29" },
+            { name: "Another", birthday: "1998-05-19" }, // Previous test date
+            { name: "Another", birthday: "1990-05-22" } 
+        ];
+        // --- END OF EDITABLE SECTION ---
+
+        const nameSelect = document.getElementById('name-select');
+        const resultArea = document.getElementById('result-area');
+        const currentYearSpan = document.getElementById('current-year');
+        const messageBox = document.getElementById('message-box');
+
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${isError ? 'error' : ''} show`;
+            setTimeout(() => { messageBox.classList.remove('show'); }, 3000);
+        }
+
+        peopleData.forEach(person => {
+            const option = document.createElement('option');
+            option.value = person.name;
+            option.textContent = person.name;
+            nameSelect.appendChild(option);
+        });
+
+        currentYearSpan.textContent = new Date().getFullYear();
+
+        nameSelect.addEventListener('change', async function() {
+            const selectedName = this.value;
+            resultArea.innerHTML = ''; 
+
+            if (!selectedName) {
+                resultArea.innerHTML = '<p class="text-gray-500">Select a name to see their birthday status!</p>';
+                return;
+            }
+
+            const person = peopleData.find(p => p.name === selectedName);
+
+            if (!person || !person.birthday) {
+                 resultArea.innerHTML = '<p class="text-red-500 font-semibold">Error: Birthday data not found.</p>';
+                 showMessage(`Could not find birthday data for ${selectedName}`, true);
+                 return;
+            }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(person.birthday)) {
+                 resultArea.innerHTML = `<p class="text-red-500 font-semibold">Error: Invalid birthday format for ${person.name}. Use YYYY-MM-DD.</p>`;
+                 showMessage(`Invalid birthday format for ${person.name}`, true);
+                return;
+            }
+
+            try {
+                const today = new Date();
+            
+                today.setHours(0, 0, 0, 0);
+
+                const birthDateParts = person.birthday.split('-');
+                const birthMonth = parseInt(birthDateParts[1], 10) - 1;
+                const birthDay = parseInt(birthDateParts[2], 10);
+
+                if (today.getMonth() === birthMonth && today.getDate() === birthDay) {
+                    resultArea.innerHTML = `
+                        <h2 class="text-3xl font-bold text-pink-600 mb-1 animate-pulse">Happy Birthday, ${person.name}!</h2>
+                        <div class="cake-container" id="cake-animation-container">
+                            <div class="cake-layer cake-layer-1" id="layer1"></div>
+                            <div class="cake-layer cake-layer-2" id="layer2"></div>
+                            <div class="cake-layer cake-layer-3" id="layer3"></div>
+                            <div class="cake-layer cake-layer-4" id="layer4"></div>
+                            <div class="candle" id="candle"><div class="flame" id="flame"></div></div>
+                        </div>
+                        <button id="generate-wish-btn" class="mt-4 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition ease-in-out duration-150">
+                            ✨ Click Here Birthday Person ✨
+                        </button>
+                        <div id="gemini-wish-loader" class="loader mt-3" style="display: none;"></div>
+                        <div id="gemini-wish-box" class="text-sm" style="display: none;"></div>
+                    `;
+
+                    const layerAnimDur = 800; const candleAnimDur = 400;
+                    setTimeout(() => document.getElementById('layer1')?.classList.add('fallen'), parseFloat(getComputedStyle(document.getElementById('layer1')).animationDelay.split(',')[0]) * 1000 + layerAnimDur);
+                    setTimeout(() => document.getElementById('layer2')?.classList.add('fallen'), parseFloat(getComputedStyle(document.getElementById('layer2')).animationDelay.split(',')[0]) * 1000 + layerAnimDur);
+                    setTimeout(() => document.getElementById('layer3')?.classList.add('fallen'), parseFloat(getComputedStyle(document.getElementById('layer3')).animationDelay.split(',')[0]) * 1000 + layerAnimDur);
+                    setTimeout(() => document.getElementById('layer4')?.classList.add('fallen'), parseFloat(getComputedStyle(document.getElementById('layer4')).animationDelay.split(',')[0]) * 1000 + layerAnimDur);
+                    setTimeout(() => document.getElementById('candle')?.classList.add('placed'), parseFloat(getComputedStyle(document.getElementById('candle')).animationDelay) * 1000 + candleAnimDur);
+                    
+                    // Event listener for the new button
+                    const generateWishBtn = document.getElementById('generate-wish-btn');
+                    const wishLoader = document.getElementById('gemini-wish-loader');
+                    const wishBox = document.getElementById('gemini-wish-box');
+
+                    if(generateWishBtn && wishLoader && wishBox) {
+                        generateWishBtn.addEventListener('click', async () => {
+                            generateWishBtn.disabled = true;
+                            wishLoader.style.display = 'block';
+                            wishBox.style.display = 'none';
+                            wishBox.textContent = '';
+
+                            const prompt = `Write a short, cheerful, and unique birthday wish for ${person.name}. Make it sound genuine and celebratory.`;
+                            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                            const payload = { contents: chatHistory };
+                            const apiKey = ""; // API key will be injected by the environment
+                            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                            try {
+                                const response = await fetch(apiUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                });
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(`API Error (${response.status}): ${errorData?.error?.message || 'Unknown error'}`);
+                                }
+                                const result = await response.json();
+
+                                if (result.candidates && result.candidates.length > 0 &&
+                                    result.candidates[0].content && result.candidates[0].content.parts &&
+                                    result.candidates[0].content.parts.length > 0) {
+                                    const text = result.candidates[0].content.parts[0].text;
+                                    wishBox.textContent = text;
+                                    wishBox.style.display = 'block';
+                                } else {
+                                    wishBox.textContent = "Sorry, couldn't generate a wish right now. The response from the AI was unexpected.";
+                                    wishBox.style.display = 'block';
+                                    console.error("Unexpected API response structure:", result);
+                                }
+                            } catch (error) {
+                                console.error('Error generating birthday wish:', error);
+                                wishBox.textContent = `Sorry, an error occurred: ${error.message}`;
+                                wishBox.style.display = 'block';
+                                showMessage("Error generating wish. See console.", true);
+                            } finally {
+                                wishLoader.style.display = 'none';
+                                generateWishBtn.disabled = false;
+                            }
+                        });
+                    }
+                    showMessage(`It's ${person.name}'s birthday today! 🎉`);
+
+                } else {
+                    const currentYearBirthday = new Date(today.getFullYear(), birthMonth, birthDay);
+                    currentYearBirthday.setHours(0, 0, 0, 0);
+                    let nextBirthday = currentYearBirthday;
+                    if (nextBirthday < today) {
+                        nextBirthday.setFullYear(today.getFullYear() + 1);
+                    }
+                    const timeDiff = nextBirthday.getTime() - today.getTime();
+                    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+                    resultArea.innerHTML = `
+                        <h2 class="text-2xl font-semibold text-blue-700 mb-4">${person.name}'s Birthday Countdown</h2>
+                        <p class="text-xl text-gray-800 mb-4">
+                            <span class="font-bold text-indigo-600">${daysLeft}</span>
+                            day${daysLeft === 1 ? '' : 's'} left until their birthday!
+                        </p>
+                        <img src="https://placehold.co/180x220/A2D2FF/333333?text=Anime+Character%0ALooking+at+Watch..."
+                             onerror="this.onerror=null; this.src='https://placehold.co/180x180/cccccc/ffffff?text=Waiting+GIF';"
+                             alt="Waiting Animation - Anime Character"
+                             class="animation-gif">
+                    `;
+                    showMessage(`${daysLeft} days until ${person.name}'s birthday.`);
+                }
+            } catch (error) {
+                 console.error("Error processing birthday:", error);
+                 resultArea.innerHTML = `<p class="text-red-500 font-semibold">An error occurred. Check console.</p>`;
+                 showMessage("An error occurred. Please check data or console.", true);
+            }
+        });
+    </script>
 </body>
 </html>
